@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Laya Performance</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700;800&display=swap');
+
+  :root{
+    --primary:#7EA6E0; --secondary:#60A5FA; --accent:#34D399; --bg:#0B1220; --fg:#E6EDF7;
+    --card:#131c2e; --card-fg:#E6EDF7; --muted:#1c2940; --muted-fg:#8ba0bd; --border:#23334e;
+    --mono:"Fira Code",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --sans:"Fira Sans",ui-sans-serif,system-ui,"Segoe UI","Noto Sans TC",sans-serif;
+  }
+  *{ box-sizing:border-box; }
+  body{ font-family:var(--sans); color:var(--fg); background:var(--bg); margin:0; padding:0; font-size:15px; line-height:1.55; -webkit-font-smoothing:antialiased; }
+  .shell{ max-width:920px; margin:0 auto; padding:30px 28px 42px; }
+
+  /* language toggle */
+  .langbar{ display:flex; justify-content:flex-end; margin-bottom:16px; }
+  .lang{ display:inline-flex; border:1px solid var(--border); border-radius:999px; overflow:hidden; }
+  .lang button{ font-family:var(--sans); font-size:12.5px; font-weight:600; padding:7px 16px; background:var(--card); color:var(--muted-fg); border:none; cursor:pointer; transition:.2s; }
+  .lang button.active{ background:var(--accent); color:#062; }
+  .lang button:hover:not(.active){ color:var(--fg); }
+
+  /* header */
+  .hd{ display:flex; align-items:flex-start; justify-content:space-between; gap:24px; padding-bottom:22px; border-bottom:1px solid var(--border); }
+  .hd .kicker{ font-family:var(--mono); font-size:11px; font-weight:600; letter-spacing:.18em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; }
+  .hd h1{ margin:0; font-size:26px; font-weight:800; letter-spacing:-.01em; color:var(--fg); line-height:1.15; }
+  .hd h1 .th{ color:var(--primary); }
+  .hd p{ margin:8px 0 0; font-size:14px; color:var(--muted-fg); max-width:56ch; }
+  .hd .chip{ flex:0 0 auto; font-family:var(--mono); font-size:11px; background:var(--muted); border:1px solid var(--border); color:var(--primary); padding:6px 12px; border-radius:999px; }
+
+  /* hero metric strip */
+  .strip{ display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--border); border:1px solid var(--border); border-radius:12px; overflow:hidden; margin:26px 0 30px; }
+  .cell{ background:var(--card); padding:18px 16px 16px; }
+  .cell .l{ font-size:11px; color:var(--muted-fg); font-weight:500; letter-spacing:.02em; margin-bottom:8px; }
+  .cell .v{ font-family:var(--mono); font-size:24px; font-weight:700; color:var(--fg); font-variant-numeric:tabular-nums; line-height:1; }
+  .cell .v small{ font-size:12px; font-weight:500; color:var(--muted-fg); }
+  .cell .d{ font-size:11.5px; color:var(--muted-fg); margin-top:7px; }
+  .cell.hl{ background:linear-gradient(160deg,#1a2b47,#23334e); }
+  .cell.hl .l, .cell.hl .v, .cell.hl .v small{ color:#fff; }
+  .cell.hl .d{ color:var(--accent); }
+  .cell.hl .v{ color:var(--accent); }
+
+  h2.sec{ font-size:14px; font-weight:700; color:var(--primary); letter-spacing:.04em; margin:0 0 14px; text-transform:uppercase; display:flex; align-items:center; gap:10px; }
+  h2.sec::after{ content:""; flex:1; height:1px; background:var(--border); }
+
+  .plat{ display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:30px; }
+  .pcard{ background:var(--card); border:1px solid var(--border); border-radius:12px; padding:20px 20px 18px; }
+  .pcard.win{ border-color:var(--accent); box-shadow:0 0 0 1px var(--accent), 0 8px 28px -14px rgba(52,211,153,.4); }
+  .pcard .pt{ display:flex; align-items:center; gap:8px; margin-bottom:4px; }
+  .pcard .pt .dot{ width:9px; height:9px; border-radius:3px; }
+  .pcard.win .pt .dot{ background:var(--accent); }
+  .pcard:not(.win) .pt .dot{ background:var(--muted-fg); }
+  .pcard .pt b{ font-size:15px; font-weight:700; color:var(--fg); }
+  .pcard .pt span{ font-size:11.5px; color:var(--muted-fg); font-family:var(--mono); }
+  .pcard .sub{ font-size:12px; color:var(--muted-fg); margin:0 0 16px; }
+  .pcard .grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px 12px; }
+  .pcard .m .mn{ font-family:var(--mono); font-size:12.5px; font-weight:700; color:var(--fg); }
+  .pcard .m .ms{ font-size:10.5px; color:var(--muted-fg); margin-bottom:10px; }
+  .pcard .m .stat{ border-top:1px dashed var(--border); padding-top:8px; margin-top:2px; }
+  .pcard .m .lab{ font-size:10.5px; color:var(--muted-fg); margin-bottom:6px; }
+  .pcard .m .bar{ height:7px; border-radius:4px; background:var(--muted); overflow:hidden; }
+  .pcard.win .m .bar i{ display:block; height:100%; background:linear-gradient(90deg,var(--accent),#6ee7b7); }
+  .pcard:not(.win) .m .bar i{ display:block; height:100%; background:var(--muted-fg); opacity:.55; }
+  .pcard .m .val{ font-family:var(--mono); font-size:13px; font-weight:600; color:var(--fg); margin-top:6px; }
+
+  .tbl{ background:var(--card); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+  table{ border-collapse:collapse; width:100%; font-size:13.5px; font-variant-numeric:tabular-nums; }
+  thead th{ text-align:right; font-size:11px; font-weight:600; color:var(--muted-fg); padding:10px 14px; background:var(--muted); border-bottom:1px solid var(--border); }
+  thead th:first-child{ text-align:left; }
+  thead th.grp{ font-size:12.5px; color:var(--primary); font-weight:700; text-align:center; }
+  thead th.model{ font-family:var(--mono); color:var(--fg); font-weight:700; }
+  tbody td{ padding:12px 14px; border-bottom:1px solid var(--border); text-align:center; }
+  tbody td:first-child{ text-align:left; }
+  tbody tr:last-child td{ border-bottom:none; }
+  .metric{ font-weight:600; color:var(--fg); }
+  td.num{ font-family:var(--mono); font-size:13px; }
+  td.win{ color:var(--accent); font-weight:700; }
+  td em{ font-style:normal; color:var(--muted-fg); font-size:11.5px; }
+  tbody tr:hover td{ background:rgba(255,255,255,.02); }
+
+  /* metric glossary */
+  .gloss{ margin-top:24px; background:var(--card); border:1px solid var(--border); border-radius:12px; padding:20px 22px; }
+  .gloss h2{ margin:0 0 4px; font-size:14px; font-weight:700; color:var(--primary); text-transform:uppercase; letter-spacing:.04em; }
+  .gloss .sub{ font-size:12.5px; color:var(--muted-fg); margin:0 0 14px; }
+  .gloss .row{ display:grid; grid-template-columns:200px 1fr; gap:16px; padding:10px 0; border-top:1px solid var(--border); }
+  .gloss .row:first-of-type{ border-top:none; }
+  .gloss .row .k{ font-family:var(--mono); font-size:12.5px; font-weight:600; color:var(--accent); }
+  .gloss .row .d{ font-size:13px; color:var(--muted-fg); }
+  .gloss .row .d b{ color:var(--fg); font-weight:600; }
+
+  /* analysis */
+  .an{ margin-top:30px; }
+  .an .intro{ font-size:14px; color:var(--muted-fg); max-width:72ch; margin:0 0 6px; }
+  .why{ display:flex; flex-direction:column; }
+  .why .item{ display:grid; grid-template-columns:52px 1fr; gap:16px; padding:18px 0; border-top:1px solid var(--border); }
+  .why .item:first-child{ border-top:none; }
+  .why .num{ font-family:var(--mono); font-size:15px; font-weight:700; color:var(--accent); line-height:1.3; }
+  .why h3{ margin:0 0 5px; font-size:15px; font-weight:700; color:var(--fg); }
+  .why p{ margin:0; font-size:13.5px; color:var(--muted-fg); max-width:70ch; }
+  .why b{ color:var(--primary); font-weight:600; }
+
+  footer{ margin-top:30px; padding-top:16px; border-top:1px solid var(--border); font-size:11.5px; color:var(--muted-fg); }
+
+  /* lang switch */
+  .en{ display:none; }
+  body[data-lang="en"] .zh{ display:none; }
+  body[data-lang="en"] .en{ display:inline; }
+
+  @media (max-width:720px){
+    .shell{ padding:20px 16px 28px; }
+    .hd{ flex-direction:column; }
+    .strip{ grid-template-columns:1fr 1fr; }
+    .plat{ grid-template-columns:1fr; }
+    .why .item{ grid-template-columns:1fr; gap:6px; }
+    .gloss .row{ grid-template-columns:1fr; gap:3px; }
+  }
+</style>
+</head>
+<body data-lang="zh">
+<div class="shell">
+
+  <div class="langbar">
+    <div class="lang">
+      <button id="btn-zh" class="active" onclick="setLang('zh')">中文</button>
+      <button id="btn-en" onclick="setLang('en')">EN</button>
+    </div>
+  </div>
+
+  <!-- header -->
+  <div class="hd">
+    <div>
+      <div class="kicker">Benchmark · FP16 · end-to-end</div>
+      <h1><span class="zh">Laya typed-decision engine <span class="th">硬體對比</span></span><span class="en">Laya typed-decision engine <span class="th">Hardware comparison</span></span></h1>
+      <p><span class="zh">兩種模型大小、兩套硬體。DGX Spark GB10 為乾淨環境實測,Apple M3 Max 為官方表數據。</span><span class="en">Two model sizes, two hardware stacks. DGX Spark GB10 measured in a clean room; Apple M3 Max from the official table.</span></p>
+    </div>
+    <span class="chip">GE 2025-2026</span>
+  </div>
+
+  <!-- hero strip -->
+  <div class="strip">
+    <div class="cell hl">
+      <div class="l"><span class="zh">GB10 · 421M · 50-q 吞吐</span><span class="en">GB10 · 421M · 50-q throughput</span></div>
+      <div class="v">641<small> q/s</small></div>
+      <div class="d">vs M3 Max 147</div>
+    </div>
+    <div class="cell">
+      <div class="l"><span class="zh">GB10 · 322M · 50-q 吞吐</span><span class="en">GB10 · 322M · 50-q throughput</span></div>
+      <div class="v">1300<small> q/s</small></div>
+      <div class="d">vs M3 Max 395</div>
+    </div>
+    <div class="cell">
+      <div class="l"><span class="zh">GB10 · 421M · P50 延遲</span><span class="en">GB10 · 421M · P50 latency</span></div>
+      <div class="v">15.8<small> ms</small></div>
+      <div class="d">vs M3 Max 13.42</div>
+    </div>
+    <div class="cell">
+      <div class="l"><span class="zh">GB10 · 322M · P50 延遲</span><span class="en">GB10 · 322M · P50 latency</span></div>
+      <div class="v">7.2<small> ms</small></div>
+      <div class="d">vs M3 Max 7.39</div>
+    </div>
+  </div>
+
+  <!-- platform cards -->
+  <h2 class="sec"><span class="zh">硬體對決</span><span class="en">Hardware head-to-head</span></h2>
+  <div class="plat">
+    <div class="pcard win">
+      <div class="pt"><span class="dot"></span><b>DGX Spark GB10</b><span>aarch64 · cu130</span></div>
+      <p class="sub"><span class="zh">torch 2.14 · 乾淨環境實測</span><span class="en">torch 2.14 · clean-room measurement</span></p>
+      <div class="grid">
+        <div class="m"><div class="mn">421M</div><div class="ms">ModernBERT-large</div>
+          <div class="stat"><div class="lab"><span class="zh">P50 單問</span><span class="en">P50 single-q</span></div><div class="bar"><i style="width:48%"></i></div><div class="val">15.8 ms</div></div>
+          <div class="stat"><div class="lab">50-q <span class="zh">吞吐</span><span class="en">throughput</span></div><div class="bar"><i style="width:100%"></i></div><div class="val">641 q/s</div></div>
+        </div>
+        <div class="m"><div class="mn">322M</div><div class="ms">mmBERT-base</div>
+          <div class="stat"><div class="lab"><span class="zh">P50 單問</span><span class="en">P50 single-q</span></div><div class="bar"><i style="width:22%"></i></div><div class="val">7.2 ms</div></div>
+          <div class="stat"><div class="lab">50-q <span class="zh">吞吐</span><span class="en">throughput</span></div><div class="bar"><i style="width:100%"></i></div><div class="val">1300 q/s</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="pcard">
+      <div class="pt"><span class="dot"></span><b>Apple M3 Max</b><span>MLX 原生</span></div>
+      <p class="sub"><span class="zh">官方表數據</span><span class="en">official table</span></p>
+      <div class="grid">
+        <div class="m"><div class="mn">421M</div><div class="ms">ModernBERT-large</div>
+          <div class="stat"><div class="lab"><span class="zh">P50 單問</span><span class="en">P50 single-q</span></div><div class="bar"><i style="width:41%"></i></div><div class="val">13.42 ms</div></div>
+          <div class="stat"><div class="lab">50-q <span class="zh">吞吐</span><span class="en">throughput</span></div><div class="bar"><i style="width:23%"></i></div><div class="val">147 q/s</div></div>
+        </div>
+        <div class="m"><div class="mn">322M</div><div class="ms">mmBERT-base</div>
+          <div class="stat"><div class="lab"><span class="zh">P50 單問</span><span class="en">P50 single-q</span></div><div class="bar"><i style="width:23%"></i></div><div class="val">7.39 ms</div></div>
+          <div class="stat"><div class="lab">50-q <span class="zh">吞吐</span><span class="en">throughput</span></div><div class="bar"><i style="width:30%"></i></div><div class="val">395 q/s</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- full table -->
+  <h2 class="sec"><span class="zh">完整數據</span><span class="en">Full data</span></h2>
+  <div class="tbl">
+    <table>
+      <thead>
+        <tr>
+          <th style="text-align:left"><span class="zh">指標</span><span class="en">Metric</span></th>
+          <th class="grp" colspan="2">DGX Spark GB10</th>
+          <th class="grp" colspan="2">Apple M3 Max</th>
+        </tr>
+        <tr><th></th><th class="model">421M</th><th class="model">322M</th><th class="model">421M</th><th class="model">322M</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="metric"><span class="zh">單問 · P50</span><span class="en">Single-q · P50</span></td><td class="num">15.8</td><td class="num">7.2</td><td class="num">13.42</td><td class="num">7.39</td></tr>
+        <tr><td class="metric"><span class="zh">單問 · P95</span><span class="en">Single-q · P95</span></td><td class="num">17.2</td><td class="num">8.6</td><td class="num">13.92</td><td class="num">7.79</td></tr>
+        <tr><td class="metric"><span class="zh">50 問吞吐</span><span class="en">50-q throughput</span></td><td class="num win">641.1</td><td class="num win">1300.1</td><td class="num">146.8</td><td class="num">395.0</td></tr>
+        <tr><td class="metric"><span class="zh">峰值 GPU 記憶體</span><span class="en">Peak GPU alloc</span> <em>(<span class="zh">單問</span><span class="en">single-q</span>)</em></td><td class="num">2499 MB</td><td class="num">1638 MB</td><td class="num">943.6 MiB</td><td class="num">687.6 MiB</td></tr>
+        <tr><td class="metric"><span class="zh">Snake · steps/s</span><span class="en">Snake · steps/s</span> <em>(headless)</em></td><td class="num">48.4</td><td class="num win">107.6</td><td class="num">—</td><td class="num">63.6</td></tr>
+        <tr><td class="metric"><span class="zh">Snake · 平均推論</span><span class="en">Snake · mean inference</span></td><td class="num">20.4 ms</td><td class="num">9.1 ms</td><td class="num">—</td><td class="num">—</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- metric glossary -->
+  <div class="gloss">
+    <h2><span class="zh">指標說明</span><span class="en">Metric glossary</span></h2>
+    <p class="sub"><span class="zh">下表每個項目代表的意義,以及怎麼讀。</span><span class="en">What each metric means and how to read it.</span></p>
+    <div class="row"><div class="k">421M / 322M</div><div class="d">
+      <span class="zh">兩種 Laya 模型:<b>421M</b> = <b>convaiinnovations/laya</b>(ModernBERT-large encoder,英文單語);<b>322M</b> = <b>convaiinnovations/laya-multilingual</b>(mmBERT-base encoder,100+ 語言)。兩者都輸出「typed decision」,但參數量與 encoder 不同。</span>
+      <span class="en">Two Laya models: <b>421M</b> = <b>convaiinnovations/laya</b> (ModernBERT-large encoder, English); <b>322M</b> = <b>convaiinnovations/laya-multilingual</b> (mmBERT-base encoder, 100+ languages). Both output typed decisions but differ in size and encoder.</span></div></div>
+    <div class="row"><div class="k">One short question · P50</div><div class="d">
+      <span class="zh">對<b>一個簡短問題</b>做一次完整推論的<b>延遲</b>(ms)。P50 = <b>中位數</b>(一半更快、一半更慢),最具代表性的「典型延遲」。</span>
+      <span class="en"><b>Latency</b> (ms) for one full inference on a <b>single short question</b>. P50 = <b>median</b> (half faster, half slower), the representative "typical latency".</span></div></div>
+    <div class="row"><div class="k">One short question · P95</div><div class="d">
+      <span class="zh">同一次推論延遲的<b>第 95 百分位</b>。代表「<b>最慢的 5%</b> 也不超過這個值」,用來評估延遲的<b>上限與穩定性</b>。</span>
+      <span class="en">The <b>95th percentile</b> of the same latency. Represents the <b>slowest 5%</b> ceiling, evaluating the <b>upper bound and stability</b> of latency.</span></div></div>
+    <div class="row"><div class="k">50-question throughput</div><div class="d">
+      <span class="zh">把 <b>50 個問題</b>一次送進模型(單次大型 batch)的<b>每秒處理問卷數</b>(q/s)。反映<b>批量吞吐能力</b>,即 GPU 攤平固定開銷後的真實運算上限。</span>
+      <span class="en">How many <b>questions</b> the model can process per second when <b>50 are batched at once</b> (q/s). Reflects <b>batch throughput</b>, the real compute ceiling after fixed overhead is amortized.</span></div></div>
+    <div class="row"><div class="k">Peak GPU allocation</div><div class="d">
+      <span class="zh">處理<b>一個單問</b>時的<b>峰值記憶體佔用</b>(GB10 用 MB,M3 Max 官方表用 MiB;1 MiB ≈ 1.048 MB)。含模型權重 + forward 暫存,評估<b>記憶體需求</b>。</span>
+      <span class="en"><b>Peak memory</b> while processing <b>one question</b> (GB10 in MB, M3 Max official in MiB; 1 MiB ≈ 1.048 MB). Includes weights + forward buffers, assessing <b>memory footprint</b>.</span></div></div>
+    <div class="row"><div class="k">Snake · steps/s</div><div class="d">
+      <span class="zh">在 <b>Laya Snake</b>「headless 全速」模式下,每秒完成的遊戲決策步數。這是<b>遊戲場景的實際吞吐</b>,含推理+規劃+作畫準備。</span>
+      <span class="en">Game decisions per second in <b>Laya Snake</b> headless full-speed. Real <b>in-game throughput</b>, including inference + planning + render prep.</span></div></div>
+    <div class="row"><div class="k">Snake · mean inference</div><div class="d">
+      <span class="zh">Snake 中<b>每次決策的平均模型推論時間</b>(ms)。是純 <code>agent.predict</code> 均值,不含遊戲/UI 與規劃開銷。</span>
+      <span class="en">The <b>average model inference time</b> per decision in Snake (ms). Pure <code>agent.predict</code> mean, excluding game/UI/planning overhead.</span></div></div>
+  </div>
+
+  <!-- analysis -->
+  <div class="an">
+    <h2 class="sec"><span class="zh">為什麼這些數字不一樣</span><span class="en">Why the numbers differ</span></h2>
+    <p class="intro"><span class="zh">同一顆模型在不同硬體、不同模型大小下,單發延遲與吞吐的關係並不一致。</span><span class="en">The same model behaves differently across hardware and model sizes: latency and throughput don't scale together.</span></p>
+    <div class="why">
+      <div class="item"><div class="num">01</div><div>
+        <h3><span class="zh">單問延遲,GB10 為什麼追平 M3 Max</span><span class="en">Why single-question latency matches</span></h3>
+        <p><span class="zh">單一短問題是<b>極小的 batch</b>,Blackwell 龐大算力只跑一兩顆小 kernel 就結束。此時瓶頸不在 GPU,而在<b>每呼叫的固定開銷</b>:<b>PyTorch eager dispatch、autocast 初始化、tokenization、Python 呼叫機制</b>。這層在 batch=1 時吃掉大部分優勢,把 GB10 拉到跟 MLX(M3 Max)差不多。</span>
+        <span class="en">A single short question is a <b>tiny batch</b>; Blackwell's massive compute finishes in one or two small kernels. The bottleneck is <b>per-call fixed overhead</b>: <b>PyTorch eager dispatch, autocast init, tokenization, Python call machinery</b>. At batch=1 this eats most of the advantage, pulling GB10 down to near MLX (M3 Max).</span></p></div></div>
+      <div class="item"><div class="num">02</div><div>
+        <h3><span class="zh">批量吞吐,GB10 為什麼翻倍</span><span class="en">Why batch throughput doubles</span></h3>
+        <p><span class="zh">把 50 個問題<b>合成一次大型 forward</b> 後,固定開銷被攤平,<b>真正的 GPU 運算量變成主導</b>。Blackwell 的原始吞吐優勢完全釋放:<b>421M 從 147 拉到 641 q/s,322M 從 395 拉到 1300 q/s</b>。<b>延遲取決於運行時開銷,吞吐取決於矽晶運算力</b>。</span>
+        <span class="en">Batching 50 questions into <b>one large forward</b> amortizes fixed overhead, so <b>true GPU compute dominates</b>. Blackwell's raw throughput advantage fully shows: <b>421M jumps 147→641 q/s, 322M 395→1300 q/s</b>. <b>Latency depends on runtime overhead, throughput on silicon.</b></span></p></div></div>
+      <div class="item"><div class="num">03</div><div>
+        <h3><span class="zh">322M 為什麼比 421M 快</span><span class="en">Why 322M is faster than 421M</span></h3>
+        <p><span class="zh">ModernBERT-large(421M)是<b>更大的 encoder</b>,每 token FLOPs 與 activation 都高於 mmBERT-base(322M)。小 batch 下差異直接放大:<b>延遲約 2 倍(15.8 vs 7.2 ms),吞吐約 2 倍(641 vs 1300)</b>。模型越大越慢是常態,<b>322M 是速度與品質的較佳平衡</b>。</span>
+        <span class="en">ModernBERT-large (421M) is a <b>larger encoder</b> with more per-token FLOPs/activations than mmBERT-base (322M). At small batch the gap compounds: <b>~2x latency (15.8 vs 7.2 ms), ~2x throughput (641 vs 1300)</b>. Bigger is slower; here <b>322M is the better speed/quality balance</b>.</span></p></div></div>
+      <div class="item"><div class="num">04</div><div>
+        <h3><span class="zh">GB10 峰值記憶體為什麼較高</span><span class="en">Why GB10 peak memory is higher</span></h3>
+        <p><span class="zh">權重都約 0.8GB(421M fp16),但 GB10 顯示 <b>2499 / 1638 MB</b>,高於 M3 Max 的 <b>943.6 / 687.6 MiB</b>。差距來自 forward 後<b>仍被保留的 PyTorch 運行時足跡</b>:autocast context、activation buffer、CUDA workspace。這是<b>每 session 的運行時佔用,不是模型大小</b>。</span>
+        <span class="en">Weights are ~0.8GB (421M fp16), but GB10 shows <b>2499 / 1638 MB</b> vs M3 Max's <b>943.6 / 687.6 MiB</b>. The gap is the <b>retained PyTorch runtime footprint</b> after forward: autocast context, activation buffers, CUDA workspace. That's per-session runtime overhead, not model size.</span></p></div></div>
+    </div>
+  </div>
+
+  <footer><span class="zh">GB10 數據於乾淨環境實測:所有 Snake 程序已關、GPU 空閒。Apple 數據引自官方 M3 Max 表。「—」為該表無此欄位。</span><span class="en">GB10 measured in a clean room (no snake running, GPU idle). Apple data from the official M3 Max table. "—" = not reported.</span></footer>
+</div>
+
+<script>
+  function setLang(lang){
+    document.body.setAttribute('data-lang', lang);
+    document.getElementById('btn-zh').classList.toggle('active', lang==='zh');
+    document.getElementById('btn-en').classList.toggle('active', lang==='en');
+    document.documentElement.lang = lang==='en' ? 'en' : 'zh-Hant';
+  }
+</script>
+</body>
+</html>

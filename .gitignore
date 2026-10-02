@@ -1,0 +1,22 @@
+# errors / build
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+*.log
+
+# venv / weights (local only, not for repo)
+.venv/
+venv/
+hf/
+
+# packaged artifact
+*.zip
+laya-snake-dgx.zip
+
+# os / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

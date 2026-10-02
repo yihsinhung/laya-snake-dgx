@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Laya Snake Guide</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700;800&display=swap');
+
+  :root{
+    --primary:#7EA6E0; --accent:#34D399; --bg:#0B1220; --fg:#E6EDF7;
+    --card:#131c2e; --muted:#1c2940; --muted-fg:#8ba0bd; --border:#23334e;
+    --mono:"Fira Code",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --sans:"Fira Sans",ui-sans-serif,system-ui,"Segoe UI","Noto Sans TC",sans-serif;
+  }
+  *{ box-sizing:border-box; }
+  body{ font-family:var(--sans); background:var(--bg); color:var(--fg); margin:0; font-size:15px; line-height:1.6; -webkit-font-smoothing:antialiased; }
+  .wrap{ max-width:900px; margin:0 auto; padding:34px 28px 60px; }
+
+  header{ display:flex; justify-content:space-between; align-items:flex-start; gap:20px; padding-bottom:22px; border-bottom:1px solid var(--border); margin-bottom:28px; }
+  .kicker{ font-family:var(--mono); font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; }
+  h1{ margin:0; font-size:27px; font-weight:800; letter-spacing:-.01em; }
+  h1 .sub{ color:var(--muted-fg); font-weight:500; }
+  header p{ margin:8px 0 0; color:var(--muted-fg); font-size:14px; max-width:58ch; }
+  .chips{ display:flex; gap:8px; flex-wrap:wrap; }
+  .chip{ font-family:var(--mono); font-size:11px; background:var(--muted); border:1px solid var(--border); color:var(--primary); padding:5px 11px; border-radius:999px; }
+
+  /* language toggle */
+  .langbar{ display:flex; justify-content:flex-end; margin-bottom:16px; }
+  .lang{ display:inline-flex; border:1px solid var(--border); border-radius:999px; overflow:hidden; }
+  .lang button{ font-family:var(--sans); font-size:12.5px; font-weight:600; padding:7px 16px; background:var(--card); color:var(--muted-fg); border:none; cursor:pointer; transition:.2s; }
+  .lang button.active{ background:var(--accent); color:#062; }
+  .lang button:hover:not(.active){ color:var(--fg); }
+
+  nav{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:30px; }
+  nav a{ font-size:13px; color:var(--muted-fg); text-decoration:none; padding:7px 14px; border:1px solid var(--border); border-radius:999px; transition:.2s; }
+  nav a:hover{ color:var(--accent); border-color:var(--accent); }
+
+  h2.sec{ font-size:15px; font-weight:700; color:var(--primary); text-transform:uppercase; letter-spacing:.05em; display:flex; align-items:center; gap:10px; margin:38px 0 16px; }
+  h2.sec::after{ content:""; flex:1; height:1px; background:var(--border); }
+
+  .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .card{ background:var(--card); border:1px solid var(--border); border-radius:12px; padding:18px 20px; }
+  .card h3{ margin:0 0 4px; font-size:14.5px; font-weight:700; color:var(--fg); }
+  .card .d{ font-size:12.5px; color:var(--accent); font-family:var(--mono); margin-bottom:8px; }
+  .card p{ margin:0 0 8px; font-size:13px; color:var(--muted-fg); }
+  .card pre{ background:rgba(0,0,0,.3); border:1px solid var(--border); border-radius:8px; padding:12px 14px; margin:0; overflow:auto; }
+  .card code{ font-family:var(--mono); font-size:12.5px; color:#e8f0fb; white-space:pre; }
+
+  .stepn{ display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--border); border:1px solid var(--border); border-radius:12px; overflow:hidden; margin-bottom:16px; }
+  .stepn .c{ background:var(--card); padding:15px 18px; }
+  .stepn .c .n{ font-family:var(--mono); font-size:11px; color:var(--accent); font-weight:700; letter-spacing:.1em; text-transform:uppercase; margin-bottom:6px; }
+  .stepn .c .t{ font-size:14px; font-weight:700; color:var(--fg); margin-bottom:4px; }
+  .stepn .c .x{ font-size:12px; color:var(--muted-fg); }
+
+  .tbl{ background:var(--card); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+  table{ border-collapse:collapse; width:100%; font-size:13px; }
+  thead th{ text-align:left; font-size:11px; color:var(--muted-fg); background:var(--muted); padding:11px 14px; border-bottom:1px solid var(--border); font-weight:600; }
+  tbody td{ padding:11px 14px; border-bottom:1px solid var(--border); color:var(--muted-fg); }
+  tbody tr:last-child td{ border-bottom:none; }
+  td:first-child{ color:var(--fg); font-weight:600; }
+  td code{ font-family:var(--mono); font-size:12px; color:var(--accent); }
+
+  .warn{ display:flex; gap:12px; background:rgba(52,211,153,.08); border:1px solid var(--accent); border-radius:12px; padding:16px 18px; }
+  .warn .ic{ font-size:18px; }
+  .warn b{ color:var(--accent); }
+  .warn p{ margin:0; color:var(--muted-fg); font-size:13.5px; }
+
+  .venv{ display:flex; gap:12px; background:var(--muted); border:1px solid var(--primary); border-radius:12px; padding:16px 18px; margin-bottom:16px; }
+  .venv .ic{ font-size:18px; }
+  .venv p{ margin:0; color:var(--muted-fg); font-size:13.5px; }
+  .venv code{ font-family:var(--mono); color:var(--accent); }
+
+  footer{ margin-top:40px; padding-top:18px; border-top:1px solid var(--border); font-size:11.5px; color:var(--muted-fg); }
+
+  /* language switch: default zh visible, en hidden */
+  .en{ display:none; }
+  body[data-lang="en"] .zh{ display:none; }
+  body[data-lang="en"] .en{ display:inline; }
+
+  @media(max-width:720px){
+    .wrap{ padding:22px 16px 40px; }
+    header{ flex-direction:column; }
+    .grid2{ grid-template-columns:1fr; }
+    .stepn{ grid-template-columns:1fr; }
+  }
+</style>
+</head>
+<body data-lang="zh">
+<div class="wrap">
+
+  <!-- language toggle -->
+  <div class="langbar">
+    <div class="lang">
+      <button id="btn-zh" class="active" onclick="setLang('zh')">中文</button>
+      <button id="btn-en" onclick="setLang('en')">EN</button>
+    </div>
+  </div>
+
+  <header>
+    <div>
+      <div class="kicker"><span class="zh">User Guide · DGX Spark</span><span class="en">User Guide · DGX Spark</span></div>
+      <h1><span class="zh">Laya Snake <span class="sub">使用指南</span></span><span class="en">Laya Snake <span class="sub">Guide</span></span></h1>
+      <p><span class="zh">在 NVIDIA DGX Spark GB10 上跑 Laya 貪食蛇。從下載 zip 到跑起來,完整流程。</span><span class="en">Run the Laya Snake on an NVIDIA DGX Spark GB10. Full flow, from the zip to a running game.</span></p>
+    </div>
+    <div class="chips"><span class="chip">torch 2.14</span><span class="chip">laya 0.3.22</span><span class="chip">CUDA 13.0</span></div>
+  </header>
+
+  <nav>
+    <a href="#zip"><span class="zh">從 zip 安裝</span><span class="en">Install from zip</span></a>
+    <a href="#venv"><span class="zh">venv 環境</span><span class="en">venv</span></a>
+    <a href="#reboot"><span class="zh">重開機</span><span class="en">After reboot</span></a>
+    <a href="#run"><span class="zh">執行</span><span class="en">Run</span></a>
+    <a href="#keys"><span class="zh">控制鍵</span><span class="en">Keys</span></a>
+    <a href="#faq"><span class="zh">常見問題</span><span class="en">FAQ</span></a>
+  </nav>
+
+  <!-- ============ FROM ZIP ============ -->
+  <h2 class="sec" id="zip"><span class="zh">從 zip 安裝(一條龍)</span><span class="en">Install from the zip</span></h2>
+  <p style="color:var(--muted-fg); font-size:13.5px; margin:0 0 16px; max-width:72ch">
+    <span class="zh">本機無 sudo,全程走<b>原生 Python venv</b>,不需 Docker。從「拿到 zip」到「蛇跑起來」共 4 步。</span>
+    <span class="en">No sudo on this box, so everything uses a <b>native Python venv</b> (no Docker). Four steps from the zip to a running snake.</span>
+  </p>
+
+  <div class="stepn">
+    <div class="c"><div class="n">Step 1</div><div class="t"><span class="zh">拿到並傳輸 zip</span><span class="en">Get & transfer the zip</span></div><div class="x"><span class="zh">scp 到 Spark 的 home</span><span class="en">scp to the Spark home</span></div></div>
+    <div class="c"><div class="n">Step 2</div><div class="t"><span class="zh">解壓</span><span class="en">Unzip</span></div><div class="x"><span class="zh">解到 ~/laya-snake-dgx</span><span class="en">to ~/laya-snake-dgx</span></div></div>
+    <div class="c"><div class="n">Step 3</div><div class="t"><span class="zh">一鍵安裝</span><span class="en">One-shot install</span></div><div class="x"><span class="zh">bootstrap.sh 自動 7 步</span><span class="en">bootstrap.sh (7 steps)</span></div></div>
+    <div class="c"><div class="n">Step 4</div><div class="t"><span class="zh">啟動 venv 執行</span><span class="en">Activate venv & run</span></div><div class="x"><span class="zh">進環境後跑蛇</span><span class="en">activate then run</span></div></div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <h3><span class="zh">Step 1 · 傳輸 + Step 2 · 解壓</span><span class="en">Step 1 · transfer + Step 2 · unzip</span></h3>
+    <div class="d"><span class="zh">在你的工作站(或 Spark)</span><span class="en">on your workstation (or Spark)</span></div>
+    <pre><code># <span class="zh">工作站:scp 傳 zip 到 Spark 的 home</span><span class="en">workstation: scp the zip to the Spark home</span>
+scp laya-snake-dgx.zip asus@&lt;SPARK_IP&gt;:~/
+
+# <span class="zh">Spark:解壓到 ~/laya-snake-dgx</span><span class="en">Spark: unzip to ~/laya-snake-dgx</span>
+cd ~
+unzip -o laya-snake-dgx.zip
+ls ~/laya-snake-dgx/   # <span class="zh">應看到 bootstrap.sh / snake / ...</span><span class="en">should show bootstrap.sh / snake / ...</span></code></pre>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <h3><span class="zh">Step 3 · 一鍵安裝(核心)</span><span class="en">Step 3 · one-shot install</span></h3>
+    <div class="d">bash ~/laya-snake-dgx/bootstrap.sh</div>
+    <pre><code>bash ~/laya-snake-dgx/bootstrap.sh</code></pre>
+    <p style="margin:10px 0 0">
+      <span class="zh">自動依序:<b>檢查前置 → 建 venv → 裝 torch 2.14 cu130(約 4GB)→ 裝 laya → 裝 snake → 下載權重 → 建 launcher → 跑 CUDA gate</b>。首次 10-30 分鐘。<b>最後必須看到「GATE PASSED」才算完成</b>。只驗證加 <code>--gate</code>。</span>
+      <span class="en">Automatically: <b>checks prereqs → creates venv → installs torch 2.14 cu130 (~4GB) → laya → snake → downloads weights → builds launcher → runs the CUDA gate</b>. First run 10-30 min. <b>You must see "GATE PASSED"</b>. Add <code>--gate</code> to only verify.</span>
+    </p>
+  </div>
+
+  <div class="card">
+    <h3><span class="zh">Step 4 · 啟動 venv + 執行</span><span class="en">Step 4 · activate venv + run</span></h3>
+    <div class="d"><span class="zh">進 Python 虛擬環境</span><span class="en">enter the Python virtual env</span></div>
+    <pre><code># <span class="zh">進入 venv(每次要用 python 前都要做)</span><span class="en">activate venv (do this before using python)</span>
+source ~/laya-snake-dgx-work/venv/bin/activate
+python --version       # <span class="zh">應顯示 venv 的 Python 3.12</span><span class="en">should show venv Python 3.12</span>
+
+# <span class="zh">現在可用 python 互動 / 跑 snake</span><span class="en">now use python or run the snake</span>
+laya-snake --max-speed   # <span class="zh">或用下方 launcher(免手動 activate)</span><span class="en">or use the launcher below (no manual activate)</span></code></pre>
+    <p style="margin:10px 0 0">
+      <span class="zh">兩種方式:<b>① 手動 <code>source activate</code> 再用 python</b>;或 <b>② 直接跑 launcher</b>(已設好 venv 與關鍵 env,免 activate):<br><code>~/laya-snake-dgx/run_snake.sh --max-speed</code></span>
+      <span class="en">Two ways: <b>① manually <code>source activate</code> then use python</b>, or <b>② just run the launcher</b> (it sets up venv + env for you):<br><code>~/laya-snake-dgx/run_snake.sh --max-speed</code></span>
+    </p>
+  </div>
+
+  <!-- ============ VENV ============ -->
+  <h2 class="sec" id="venv"><span class="zh">關於 venv 環境</span><span class="en">About the venv</span></h2>
+  <div class="venv">
+    <div class="ic">🐍</div>
+    <p><b><span class="zh">venv 位置</span><span class="en">location</span></b>:<code>~/laya-snake-dgx-work/venv</code><br>
+    <b><span class="zh">每次用 python 前必先 activate</span><span class="en">always activate before python</span></b>:<code>source ~/laya-snake-dgx-work/venv/bin/activate</code><br>
+    <b><span class="zh">驗證已進入</span><span class="en">verify</span></b>:<code>which python</code> <span class="zh">應指向 venv</span><span class="en">should point into the venv</span>;<code>torch.cuda.is_available()</code> <span class="zh">應為 True</span><span class="en">should be True</span>.<br>
+    <b><span class="zh">省事法</span><span class="en">easy way</span></b>:<span class="zh">直接跑 <code>run_snake.sh</code> / <code>gate_check.py</code>,內部已解析 venv,免手動 activate。</span><span class="en">just run <code>run_snake.sh</code> / <code>gate_check.py</code> - they resolve the venv for you.</span></p>
+  </div>
+
+  <!-- ============ REBOOT ============ -->
+  <h2 class="sec" id="reboot"><span class="zh">重開機後恢復</span><span class="en">After a reboot</span></h2>
+  <p style="color:var(--muted-fg); font-size:13.5px; margin:0 0 16px; max-width:72ch">
+    <span class="zh">venv 與權重在磁碟上,<b>重開機不會消失</b>,所以不用重裝,只需恢復執行。</span>
+    <span class="en">The venv and weights live on disk, so <b>a reboot does not wipe them</b>; just resume, no reinstall.</span>
+  </p>
+  <div class="grid2">
+    <div class="card">
+      <h3><span class="zh">驗證 + 開互動窗</span><span class="en">Verify + open interactive</span></h3>
+      <div class="d">一鍵 one-shot</div>
+      <pre><code>bash ~/laya-snake-dgx/after_reboot.sh</code></pre>
+      <p><span class="zh">檢查 venv/torch/laya/權重,確認 :0 桌面,然後開「Laya Snake FULL」視窗。<b>跑完會提示如何進 venv</b>。</span><span class="en">Checks venv/torch/laya/weights, confirms :0 desktop, opens a "Laya Snake FULL" window. <b>It prints how to enter the venv.</b></span></p>
+    </div>
+    <div class="card">
+      <h3><span class="zh">無頭 benchmark</span><span class="en">Headless benchmark</span></h3>
+      <div class="d">--headless</div>
+      <pre><code>bash ~/laya-snake-dgx/after_reboot.sh --headless</code></pre>
+      <p><span class="zh">不需畫面,跑 600 步自動停。前提:GNOME 桌面(<code>:0</code>)已登入。</span><span class="en">No display needed; runs 600 steps and stops. Prereq: GNOME desktop (<code>:0</code>) is logged in.</span></p>
+    </div>
+  </div>
+
+  <!-- ============ RUN ============ -->
+  <h2 class="sec" id="run"><span class="zh">執行蛇的各種方式</span><span class="en">Ways to run the snake</span></h2>
+  <div class="card">
+    <pre><code># <span class="zh">互動,12 FPS(人眼看清楚)</span><span class="en">interactive, 12 FPS</span>
+~/laya-snake-dgx/run_snake.sh
+
+# <span class="zh">互動,全速(~75 steps/s)</span><span class="en">interactive, full speed (~75 steps/s)</span>
+~/laya-snake-dgx/run_snake.sh --max-speed
+
+# <span class="zh">無頭 benchmark,600 步自動停</span><span class="en">headless benchmark, 600 steps</span>
+~/laya-snake-dgx/run_snake.sh --headless --steps 600 --max-speed
+
+# <span class="zh">換模型:英文 421M(預設多語 322M)</span><span class="en">switch to English 421M (default multilingual 322M)</span>
+~/laya-snake-dgx/run_snake.sh --max-speed --model convaiinnovations/laya
+
+# <span class="zh">完整效能測試</span><span class="en">full benchmark sweep</span>
+~/laya-snake-dgx/run_snake.sh benchmark --rates 30 --sweep-steps 100 \
+  --seeds 101,102 --output ~/laya-snake-dgx-work/bench.json</code></pre>
+  </div>
+
+  <h2 class="sec" id="keys"><span class="zh">互動控制鍵</span><span class="en">Interactive keys</span></h2>
+  <div class="tbl">
+    <table>
+      <thead><tr><th><span class="zh">鍵</span><span class="en">Key</span></th><th><span class="zh">動作</span><span class="en">Action</span></th></tr></thead>
+      <tbody>
+        <tr><td>空白鍵 Space</td><td><span class="zh">暫停 / 繼續</span><span class="en">Pause / resume</span></td></tr>
+        <tr><td>↑ ↓ 或 + −</td><td><span class="zh">調整決策率(±2 steps/s)</span><span class="en">adjust decision rate (±2 steps/s)</span></td></tr>
+        <tr><td>R</td><td><span class="zh">換下一個 seed 開新局</span><span class="en">new round with next seed</span></td></tr>
+        <tr><td>Q / Ctrl-C</td><td><span class="zh">離開並還原終端</span><span class="en">quit and restore the terminal</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ============ FAQ ============ -->
+  <h2 class="sec" id="faq"><span class="zh">常見問題</span><span class="en">FAQ</span></h2>
+  <div class="tbl">
+    <table>
+      <thead><tr><th><span class="zh">狀況</span><span class="en">Issue</span></th><th><span class="zh">原因</span><span class="en">Cause</span></th><th><span class="zh">解決</span><span class="en">Fix</span></th></tr></thead>
+      <tbody>
+        <tr><td>Triton <code>Python.h</code> <span class="zh">錯誤</span><span class="en">error</span></td><td><span class="zh">沒設 <code>TORCH_DISABLE_NATIVE_JIT</code></span><span class="en">missing <code>TORCH_DISABLE_NATIVE_JIT</code></span></td><td><span class="zh">用 <code>run_snake.sh</code>,別直接 <code>laya-snake</code></span><span class="en">use <code>run_snake.sh</code></span></td></tr>
+        <tr><td><span class="zh">GPU 利用率低</span><span class="en">low GPU util</span></td><td><span class="zh">互動 12 FPS 刻意放慢</span><span class="en">12 FPS pacing</span></td><td><span class="zh">正常;<code>--max-speed</code> 拉到 ~74%</span><span class="en">normal; <code>--max-speed</code> → ~74%</span></td></tr>
+        <tr><td><code>cuda.is_available()</code> False</td><td><span class="zh">NVIDIA 驅動問題</span><span class="en">driver issue</span></td><td><span class="zh">檢查驅動</span><span class="en">check driver</span></td></tr>
+        <tr><td><span class="zh">權重找不到</span><span class="en">weights missing</span></td><td><span class="zh">cache 路徑不對</span><span class="en">wrong cache path</span></td><td><span class="zh">重跑 <code>bootstrap.sh</code></span><span class="en">re-run <code>bootstrap.sh</code></span></td></tr>
+        <tr><td><span class="zh">視窗沒開出來</span><span class="en">window not opening</span></td><td><span class="zh">桌面未登入 / dbus 未就緒</span><span class="en">desktop / dbus not ready</span></td><td><span class="zh">登入後重跑 <code>after_reboot.sh</code></span><span class="en">login then re-run <code>after_reboot.sh</code></span></td></tr>
+        <tr><td><code>python</code> <span class="zh">找不到套件</span><span class="en">no packages</span></td><td><span class="zh">沒進 venv</span><span class="en">not in venv</span></td><td><code>source ~/laya-snake-dgx-work/venv/bin/activate</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="warn" style="margin-top:24px">
+    <div class="ic">⚠️</div>
+    <p><b><span class="zh">兩個必知坑</span><span class="en">Two gotchas</span></b><br>
+    1. <b><span class="zh">務必經 <code>run_snake.sh</code> 跑</span><span class="en">always run via <code>run_snake.sh</code></span></b><span class="zh"> —— 它已設 <code>TORCH_DISABLE_NATIVE_JIT=1</code>,否則 Triton 編譯缺 <code>Python.h</code> 會炸(無 sudo 裝不了 python3-dev)。</span><span class="en"> - it sets <code>TORCH_DISABLE_NATIVE_JIT=1</code>, else Triton needs <code>Python.h</code> and fails (no sudo for python3-dev).</span><br>
+    2. <b><span class="zh">用 PyTorch 版權重</span><span class="en">use PyTorch weights</span></b><span class="zh"> —— <code>convaiinnovations/laya-multilingual</code> 或 <code>convaiinnovations/laya</code>,不是 MLX 的 <code>aac6fef/...-mlx</code>。</span><span class="en"> - <code>convaiinnovations/laya-multilingual</code> or <code>convaiinnovations/laya</code>, not MLX's <code>aac6fef/...-mlx</code>.</span></p>
+  </div>
+
+  <footer><span class="zh">套件 zip:</span><span class="en">Package zip:</span> laya-snake-dgx.zip · <span class="zh">解壓到</span><span class="en">unzip to</span> ~/laya-snake-dgx · <span class="zh">環境</span><span class="en">env</span> ~/laya-snake-dgx-work/</footer>
+
+</div>
+
+<script>
+  const zhs = document.querySelectorAll('.zh'), ens = document.querySelectorAll('.en');
+  function setLang(lang){
+    document.body.setAttribute('data-lang', lang);
+    document.getElementById('btn-zh').classList.toggle('active', lang==='zh');
+    document.getElementById('btn-en').classList.toggle('active', lang==='en');
+    document.documentElement.lang = lang==='en' ? 'en' : 'zh-Hant';
+  }
+  // show/hide based on data-lang for block-level spans too
+  const observer = new MutationObserver(()=>{
+    const lang = document.body.getAttribute('data-lang');
+    document.querySelectorAll('[data-lang] .zh, [data-lang] .en').forEach(()=>{});
+  });
+  observer.observe(document.body, {attributes:true, attributeFilter:['data-lang']});
+</script>
+</body>
+</html>

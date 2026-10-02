@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "laya-snake-dgx"
+version = "1.0.0"
+description = "Laya Snake demo ported to the PyTorch/NandhaKishorM laya runtime (DGX Spark / CUDA)"
+requires-python = ">=3.10"
+dependencies = [
+    "rich>=15,<16",
+    "Pillow>=12,<13",
+]
+
+[project.scripts]
+laya-snake = "snake.cli:main"
+
+[tool.setuptools]
+packages = ["snake"]
