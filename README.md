@@ -1,157 +1,169 @@
 # Laya Snake on DGX Spark (GB10)
 
-把 Laya 貪食蛇(從 Apple 專用的 laya-mlx 移植成 PyTorch 版)跑在 NVIDIA DGX Spark GB10 上。
-**已在此機實測通過**:CUDA 推論 OK、蛇全速跑、GATE PASSED。
+Run the Laya Snake demo (ported from the Apple-only laya-mlx to the PyTorch version) on an
+NVIDIA DGX Spark GB10. **Verified on this box**: CUDA inference OK, snake runs at full speed,
+GATE PASSED.
 
-本機無 sudo,所以全部走**原生 Python venv**(不用 Docker)。
+This box has no sudo, so everything runs on a **native Python venv** (no Docker).
 
-> 繁體中文版說明文件見 [USER_GUIDE.html](USER_GUIDE.html) 與本檔。
-> English version: see [README.en.md](README.en.md)。
+> Traditional Chinese guide: [README.zh-Hant.md](README.zh-Hant.md) and [USER_GUIDE.html](USER_GUIDE.html).
 
 ---
 
 ## License & Attribution
 
-本專案以 **Apache License 2.0** 授權(見 [LICENSE](LICENSE)、[NOTICE](NOTICE)),
-為下列上游的衍生作品:
+This project is licensed under the **Apache License 2.0** (see [LICENSE](LICENSE),
+[NOTICE](NOTICE)). It is a derivative work of:
 
-- **laya-mlx** — https://github.com/mizorewww/laya-mlx (Apache-2.0), snake 遊戲與展示框架取自於此
-- **Laya** — https://github.com/NandhaKishorM/laya (Apache-2.0), 模型 runtime / DecisionModel 取自於此
+- **laya-mlx** — https://github.com/mizorewww/laya-mlx (Apache-2.0); the Snake game and
+  demo framework are adapted from it
+- **Laya** — https://github.com/NandhaKishorM/laya (Apache-2.0); the model runtime /
+  DecisionModel are adapted from it
 
-模型權重由 Convai Innovations 於 Hugging Face 另行下載(`convaiinnovations/laya`、
-`convaiinnovations/laya-multilingual`),**不包含在本 repo**。
+Model weights are downloaded separately from Convai Innovations on Hugging Face
+(`convaiinnovations/laya`, `convaiinnovations/laya-multilingual`) and are **not
+included** in this repository.
 
 ---
 
-## 即時畫面(322M · 全速)
+## Live view (322M · full speed)
 
 ![Laya Snake FULL on GB10](docs/images/snake_322m_full.png)
 
-> 上圖為 **Laya Snake FULL** 在 NVIDIA GB10 上全速執行的即時畫面(322M 模型)。
-> 右側顯示決策機率、死路風險、食物可達性、推論時間與決策速度。
+> Screenshot of **Laya Snake FULL** running at full speed on NVIDIA GB10 (322M model).
+> The right panel shows decision probabilities, dead-end risk, food reachability, inference
+> time and decisions per second.
 
 ---
 
-## 一、檔案總覽
+## 1. Files
 
-| 路徑 | 用途 |
+| Path | Purpose |
 |---|---|
-| `~/laya-snake-dgx/bootstrap.sh` | **一鍵安裝/修復**(全新機或重裝,冪等,可無腦重跑) |
-| `~/laya-snake-dgx/after_reboot.sh` | **重開機後一鍵恢復執行**(驗證 + 開視窗,不重裝) |
-| `~/laya-snake-dgx/run_snake.sh` | 執行蛇的 launcher(已 export 關鍵 env) |
-| `~/laya-snake-dgx/gate_check.py` | CUDA 閘門測試(自包含、離線) |
-| `~/laya-snake-dgx/snake/` | 移植的 snake 套件 |
-| `~/laya-snake-dgx/USER_GUIDE.html` | 中英雙語使用指南(瀏覽器開啟) |
-| `~/laya-snake-dgx/performance_card.html` | 性能對比卡(瀏覽器開啟) |
-| `~/laya-snake-dgx-work/venv/` | Python venv(磁碟上,重開機不消失) |
-| `~/laya-snake-dgx-work/hf/` | 模型權重 cache(磁碟上,重開機不消失) |
+| `~/laya-snake-dgx/bootstrap.sh` | **One-shot install/repair** (fresh box or reinstall; idempotent, safe to re-run) |
+| `~/laya-snake-dgx/after_reboot.sh` | **Resume after reboot** (verify + open window; no reinstall) |
+| `~/laya-snake-dgx/run_snake.sh` | Launcher (exports the critical env) |
+| `~/laya-snake-dgx/gate_check.py` | CUDA gate test (self-contained, offline) |
+| `~/laya-snake-dgx/snake/` | The ported snake package |
+| `~/laya-snake-dgx/USER_GUIDE.html` | Bilingual (ZH/EN) guide (open in browser) |
+| `~/laya-snake-dgx/performance_card.html` | Performance comparison card (open in browser) |
+| `~/laya-snake-dgx-work/venv/` | Python venv (on disk; survives reboot) |
+| `~/laya-snake-dgx-work/hf/` | Model weight cache (on disk; survives reboot) |
 
-**壓縮包**:`laya-snake-dgx.zip` 已內含以上全部檔案,scp 到 Spark 解壓即可。
+**Package**: `laya-snake-dgx.zip` contains all of the above. `scp` it to the Spark and unzip.
 
 ---
 
-## 二、從 zip 安裝(全新機,一條龍)
+## 2. Install from the zip (fresh box, all-in-one)
 
-從「拿到 zip」到「蛇跑起來」共 4 步。
+Four steps from the zip to a running snake.
 
-### Step 1 + 2 · 傳輸 + 解壓
+### Step 1 + 2 · Transfer + unzip
 ```bash
-# 工作站
+# workstation
 scp laya-snake-dgx.zip asus@<SPARK_IP>:~/
 
 # Spark
 cd ~
-unzip -o laya-snake-dgx.zip      # 生成 ~/laya-snake-dgx/
+unzip -o laya-snake-dgx.zip      # creates ~/laya-snake-dgx/
 ls ~/laya-snake-dgx/
 ```
 
-### Step 3 · 一鍵安裝(核心)
+### Step 3 · One-shot install (core)
 ```bash
 bash ~/laya-snake-dgx/bootstrap.sh
 ```
-自動依序:**檢查前置 → 建 venv → 裝 torch 2.14 cu130(約 4GB)→ 裝 laya runtime → 裝 snake 套件 → 下載模型權重 → 建 launcher → 跑 CUDA gate**。
-首次下載較大,約 10-30 分鐘。**最後必須看到「GATE PASSED」才算完成**。
-只想驗證不重裝:`bash ~/laya-snake-dgx/bootstrap.sh --gate`。
+Automatically: **check prereqs -> create venv -> install torch 2.14 cu130 (~4GB) -> laya runtime
+-> snake package -> download weights -> build launcher -> run the CUDA gate**.
+First run downloads a lot, 10-30 min. **You must see "GATE PASSED"** to be done.
+Only verify, no reinstall: `bash ~/laya-snake-dgx/bootstrap.sh --gate`.
 
-### Step 4 · 啟動 venv + 執行
+### Step 4 · Activate the venv + run
 ```bash
 source ~/laya-snake-dgx-work/venv/bin/activate
-python --version          # 應顯示 venv 的 Python 3.12
-laya-snake --max-speed    # 或直接用 launcher(免 activate)
+python --version          # should show the venv's Python 3.12
+laya-snake --max-speed    # or use the launcher (no manual activate)
 ```
 
 ---
 
-## 三、關於 venv 環境
+## 3. About the venv
 
-- venv 位置:`~/laya-snake-dgx-work/venv`
-- **每次要用 python 前必先 activate**:`source ~/laya-snake-dgx-work/venv/bin/activate`
-- 驗證已進入:`which python` 應指向 venv 內路徑;`torch.cuda.is_available()` 應為 True
-- 省事法:直接跑 `run_snake.sh` / `gate_check.py`,內部已解析 venv,免手動 activate
+- Location: `~/laya-snake-dgx-work/venv`
+- **Always activate before using python**: `source ~/laya-snake-dgx-work/venv/bin/activate`
+- Verify: `which python` should point into the venv; `torch.cuda.is_available()` should be True
+- Easy way: just run `run_snake.sh` / `gate_check.py` - they resolve the venv for you
 
 ---
 
-## 四、重開機後(最常用!)
+## 4. After a reboot (most common)
 
-venv 和權重在磁碟上,重開機不會消失,所以**不用重裝、不跑 bootstrap**,只需恢復執行。
+The venv and weights live on disk, so **a reboot does not wipe them**; just resume, no reinstall,
+no bootstrap.
 
 ```bash
-bash ~/laya-snake-dgx/after_reboot.sh            # 驗證 + 開 FULL 互動窗
-bash ~/laya-snake-dgx/after_reboot.sh --headless # 開無頭 benchmark
+bash ~/laya-snake-dgx/after_reboot.sh            # verify + open FULL interactive
+bash ~/laya-snake-dgx/after_reboot.sh --headless # headless benchmark
 ```
-它會檢查 venv/torch/laya/權重 → 確認 :0 桌面 → 開「Laya Snake FULL」視窗,**並提示如何進 venv**。
+It checks venv/torch/laya/weights -> confirms the :0 desktop -> opens a "Laya Snake FULL" window,
+**and prints how to enter the venv**.
 
-> ⚠️ 前提:GNOME 桌面必須已登入(`:0` 起來)。剛開機未就緒就稍等或登入後再跑。
+> Prereq: the GNOME desktop (`:0`) must be logged in. If it isn't ready right after boot, log in
+> then re-run.
 
 ---
 
-## 五、執行蛇的各種方式
+## 5. Ways to run the snake
 
 ```bash
-~/laya-snake-dgx/run_snake.sh                          # 互動,12 FPS(看得清楚)
-~/laya-snake-dgx/run_snake.sh --max-speed              # 互動,全速(~75 steps/s)
-~/laya-snake-dgx/run_snake.sh --headless --steps 600 --max-speed   # 無頭 benchmark
-~/laya-snake-dgx/run_snake.sh --max-speed --model convaiinnovations/laya   # 換英文 421M
+~/laya-snake-dgx/run_snake.sh                          # interactive, 12 FPS
+~/laya-snake-dgx/run_snake.sh --max-speed              # interactive, full speed (~75 steps/s)
+~/laya-snake-dgx/run_snake.sh --headless --steps 600 --max-speed   # headless benchmark
+~/laya-snake-dgx/run_snake.sh --max-speed --model convaiinnovations/laya   # switch to English 421M
 ~/laya-snake-dgx/run_snake.sh benchmark --rates 30 --sweep-steps 100 --seeds 101,102 --output ~/laya-snake-dgx-work/bench.json
 ```
 
-### 互動控制鍵
-| 鍵 | 動作 |
+### Interactive keys
+| Key | Action |
 |---|---|
-| 空白鍵 | 暫停/繼續 |
-| ↑↓ 或 +− | 調整決策率 ±2 |
-| R | 換新 seed 開局 |
-| Q / Ctrl-C | 離開 |
+| Space | Pause / resume |
+| Up/Down or +/- | Adjust decision rate (+/-2) |
+| R | New round with next seed |
+| Q / Ctrl-C | Quit and restore the terminal |
 
 ---
 
-## 六、兩個必知坑(否則會炸)
+## 6. Two gotchas (or it breaks)
 
-1. **`TORCH_DISABLE_NATIVE_JIT=1` 必須設** — torch 2.14 首次推論會用 gcc 現編 Triton kernel,要 `Python.h`(python3-dev),但本機無 sudo 裝不了。`run_snake.sh` 和 `gate_check.py` 都已設好;**別繞過 launcher 直接跑 `laya-snake`**,否則碰到 Triton 就報錯。
-2. **用 PyTorch 版權重** — `convaiinnovations/laya-multilingual` 或 `convaiinnovations/laya`,不是 MLX 的 `aac6fef/...-mlx`。
+1. **`TORCH_DISABLE_NATIVE_JIT=1` is required** - torch 2.14 compiles a Triton kernel on first
+   inference and needs `Python.h` (python3-dev), which needs sudo you don't have. Both
+   `run_snake.sh` and `gate_check.py` set it; **never bypass the launcher and call `laya-snake`
+   directly**, or you hit the Triton error.
+2. **Use the PyTorch weights** - `convaiinnovations/laya-multilingual` or `convaiinnovations/laya`,
+   not MLX's `aac6fef/...-mlx`.
 
 ---
 
-## 七、常見問題
+## 7. FAQ
 
-| 狀況 | 原因 | 解決 |
+| Issue | Cause | Fix |
 |---|---|---|
-| Triton `Python.h` 錯誤 | 沒設 `TORCH_DISABLE_NATIVE_JIT` | 用 `run_snake.sh`,別直接 `laya-snake` |
-| GPU 利用率低(8-16%) | 互動 12 FPS 刻意放慢 | 正常;`--max-speed` 拉到 ~74% |
-| `torch.cuda.is_available()` False | NVIDIA 驅動問題 | 檢查驅動 / Container Toolkit |
-| 權重找不到 | cache 路徑不對 | 重跑 `bootstrap.sh` 或確認 `~/laya-snake-dgx-work/hf` |
-| 視窗沒開出來 | 桌面未登入 / dbus 未就緒 | 登入後重跑 `after_reboot.sh` |
-| `python` 找不到套件 | 沒進 venv | `source ~/laya-snake-dgx-work/venv/bin/activate` |
+| Triton `Python.h` error | missing `TORCH_DISABLE_NATIVE_JIT` | use `run_snake.sh`, not `laya-snake` |
+| Low GPU util (8-16%) | 12 FPS pacing | normal; `--max-speed` -> ~74% |
+| `torch.cuda.is_available()` False | NVIDIA driver issue | check driver / Container Toolkit |
+| Weights missing | wrong cache path | re-run `bootstrap.sh` |
+| Window not opening | desktop / dbus not ready | log in then re-run `after_reboot.sh` |
+| `python` finds no packages | not in venv | `source ~/laya-snake-dgx-work/venv/bin/activate` |
 
 ---
 
-## 八、性能摘要(GB10 乾淨實測)
+## 8. Performance summary (GB10, clean room)
 
-| 指標 | GB10 421M | GB10 322M |
+| Metric | GB10 421M | GB10 322M |
 |---|---|---|
-| 單問 P50 延遲 | 15.8 ms | 7.2 ms |
-| 50-q 批量吞吐 | 641 q/s | 1300 q/s |
-| Snake 全速 steps/s | 48.4 | 107.6 |
-| Snake 平均推論 | 20.4 ms | 9.1 ms |
+| Single-question P50 latency | 15.8 ms | 7.2 ms |
+| 50-question throughput | 641 q/s | 1300 q/s |
+| Snake full-speed steps/s | 48.4 | 107.6 |
+| Snake mean inference | 20.4 ms | 9.1 ms |
 
-詳細對比含 Apple M3 Max,見 `performance_card.html`。
+Full comparison incl. Apple M3 Max: see `performance_card.html`.
