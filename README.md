@@ -36,6 +36,45 @@ included** in this repository.
 
 ---
 
+## Verified on ASUS DGX Spark GB10 (GX10)
+
+This package was built and validated on an actual **NVIDIA DGX Spark GB10** (unit `gx10-0000`,
+aarch64). The Snake demo runs end-to-end on CUDA, with the CUDA gate passing.
+
+**Environment used for the verification**
+
+| Component | Version / value |
+|---|---|
+| Host | DGX Spark GB10 · `gx10-0000` · aarch64 · Ubuntu |
+| GPU | NVIDIA GB10 |
+| Python | 3.12 (venv at `~/laya-snake-dgx-work/venv`) |
+| PyTorch | 2.14.0+cu130 (aarch64 CUDA build) |
+| laya runtime | 0.3.22 (from `NandhaKishorM/laya`) |
+| Model | `convaiinnovations/laya-multilingual`(322M, default)· `convaiinnovations/laya`(421M) |
+| CUDA | `torch.cuda.is_available()` = True |
+
+**Verification results (322M · full speed)**
+
+| Check | Result |
+|---|---|
+| CUDA gate (`gate_check.py`) | PASSED |
+| Live CUDA load | OK (cold start ~753 ms, 154 tokens) |
+| Snake · full-speed | ~107 steps/s, 0 deaths, 0 shield interventions (1500 steps) |
+| Snake · P50 inference | 9.1 ms |
+| GPU utilization (headless) | ~74%, 33.8 W |
+
+Reproduce locally:
+
+```bash
+bash ~/laya-snake-dgx/bootstrap.sh --gate        # re-run the CUDA gate
+bash ~/laya-snake-dgx/run_snake.sh --headless --steps 600 --max-speed
+```
+
+See the live screenshot in the [Live view](#live-view-322m--full-speed) above, and the full
+performance comparison in `performance_card.html`.
+
+---
+
 ## 1. Files
 
 | Path | Purpose |

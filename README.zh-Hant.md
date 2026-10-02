@@ -32,6 +32,44 @@
 
 ---
 
+## 已在 ASUS DGX Spark GB10 (GX10) 上實測驗證
+
+本套件是在一台**真正的 NVIDIA DGX Spark GB10**(機身 `gx10-0000`,aarch64)上建置並驗證的。
+貪食蛇在 **CUDA** 上端到端跑通,CUDA 閘門測試通過。
+
+**驗證環境**
+
+| 項目 | 版本 / 值 |
+|---|---|
+| 主機 | DGX Spark GB10 · `gx10-0000` · aarch64 · Ubuntu |
+| GPU | NVIDIA GB10 |
+| Python | 3.12(venv 於 `~/laya-snake-dgx-work/venv`) |
+| PyTorch | 2.14.0+cu130 (aarch64 CUDA build) |
+| laya runtime | 0.3.22(來自 `NandhaKishorM/laya`) |
+| 模型 | `convaiinnovations/laya-multilingual`(322M,預設)· `convaiinnovations/laya`(421M) |
+| CUDA | `torch.cuda.is_available()` = True |
+
+**驗證結果(322M · 全速)**
+
+| 檢查 | 結果 |
+|---|---|
+| CUDA 閘門(`gate_check.py`) | PASSED |
+| Live CUDA 載入 | OK(冷啟動 ~753 ms,154 tokens) |
+| Snake · 全速 | ~107 steps/s,0 死亡,0 護盾介入(1500 步) |
+| Snake · P50 推論 | 9.1 ms |
+| GPU 利用(無頭) | ~74%,33.8 W |
+
+在本機重現:
+
+```bash
+bash ~/laya-snake-dgx/bootstrap.sh --gate        # 重跑 CUDA 閘門
+bash ~/laya-snake-dgx/run_snake.sh --headless --steps 600 --max-speed
+```
+
+即時截圖見上方「即時畫面」,完整性能比較見 `performance_card.html`。
+
+---
+
 ## 一、檔案總覽
 
 | 路徑 | 用途 |
