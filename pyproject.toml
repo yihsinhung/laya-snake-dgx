@@ -7,6 +7,9 @@ name = "laya-snake-dgx"
 version = "1.0.0"
 description = "Laya Snake demo ported to the PyTorch/NandhaKishorM laya runtime (DGX Spark / CUDA)"
 requires-python = ">=3.10"
+license = { file = "LICENSE" }
+authors = [{ name = "laya-snake-dgx contributors" }]
+readme = "README.md"
 dependencies = [
     "rich>=15,<16",
     "Pillow>=12,<13",

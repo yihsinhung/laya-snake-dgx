@@ -10,6 +10,22 @@ This box has no sudo, so everything runs on a **native Python venv** (no Docker)
 
 ---
 
+## License & Attribution
+
+This project is licensed under the **Apache License 2.0** (see [LICENSE](LICENSE),
+[NOTICE](NOTICE)). It is a derivative work of:
+
+- **laya-mlx** — https://github.com/mizorewww/laya-mlx (Apache-2.0); the Snake game and
+  demo framework are adapted from it
+- **Laya** — https://github.com/NandhaKishorM/laya (Apache-2.0); the model runtime /
+  DecisionModel are adapted from it
+
+Model weights are downloaded separately from Convai Innovations on Hugging Face
+(`convaiinnovations/laya`, `convaiinnovations/laya-multilingual`) and are **not
+included** in this repository.
+
+---
+
 ## Live view (322M · full speed)
 
 ![Laya Snake FULL on GB10](docs/images/snake_322m_full.png)

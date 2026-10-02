@@ -1,0 +1,28 @@
+laya-snake-dgx
+Copyright 2026 the laya-snake-dgx contributors
+
+This product is a derivative work. It is distributed under the
+Apache License, Version 2.0 (see the LICENSE file).
+
+
+Attribution to upstream projects
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This product includes software derived from laya-mlx:
+https://github.com/mizorewww/laya-mlx
+Copyright 2026 laya-mlx contributors. Licensed under Apache-2.0.
+
+This product includes software derived from Laya:
+https://github.com/NandhaKishorM/laya
+Copyright Convai Innovations and Laya contributors. Licensed under Apache-2.0.
+Upstream source revision: 573e5b62696ba441230cd6be71d593331b5d23af
+
+The Snake demonstration game (game.py, ui.py, cli.py, replay.py,
+benchmark.py, and the pure-Python parts of policy.py) is adapted from
+laya-mlx. The model runtime and DecisionModel interface are adapted
+from Laya (NandhaKishorM/laya).
+
+Model weights are downloaded separately from Convai Innovations on
+Hugging Face (convaiinnovations/laya and
+convaiinnovations/laya-multilingual); they are NOT included in this
+repository.

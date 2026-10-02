@@ -10,6 +10,19 @@
 
 ---
 
+## License & Attribution
+
+本專案以 **Apache License 2.0** 授權(見 [LICENSE](LICENSE)、[NOTICE](NOTICE)),
+為下列上游的衍生作品:
+
+- **laya-mlx** — https://github.com/mizorewww/laya-mlx (Apache-2.0), snake 遊戲與展示框架取自於此
+- **Laya** — https://github.com/NandhaKishorM/laya (Apache-2.0), 模型 runtime / DecisionModel 取自於此
+
+模型權重由 Convai Innovations 於 Hugging Face 另行下載(`convaiinnovations/laya`、
+`convaiinnovations/laya-multilingual`),**不包含在本 repo**。
+
+---
+
 ## 即時畫面(322M · 全速)
 
 ![Laya Snake FULL on GB10](docs/images/snake_322m_full.png)
