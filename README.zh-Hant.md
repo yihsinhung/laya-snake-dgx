@@ -145,13 +145,30 @@ bash ~/laya-snake-dgx/after_reboot.sh --headless # 開無頭 benchmark
 
 ---
 
-## 八、性能摘要(GB10 乾淨實測)
+## 八、性能摘要
 
-| 指標 | GB10 421M | GB10 322M |
-|---|---|---|
-| 單問 P50 延遲 | 15.8 ms | 7.2 ms |
-| 50-q 批量吞吐 | 641 q/s | 1300 q/s |
-| Snake 全速 steps/s | 48.4 | 107.6 |
-| Snake 平均推論 | 20.4 ms | 9.1 ms |
+FP16,端到端。GB10 於乾淨環境實測(無 Snake 在跑、GPU 閒置);Apple M3 Max 數據引自官方表。
+峰值記憶體:GB10 以 MB 計,M3 Max 以 MiB 計(1 MiB ≈ 1.048 MB)。
 
-詳細對比含 Apple M3 Max,見 `performance_card.html`。
+| 指標 | GB10 421M | GB10 322M | M3 Max 421M | M3 Max 322M |
+|---|---|---|---|---|
+| 單問 · P50 延遲 | 15.8 ms | 7.2 ms | 13.42 ms | 7.39 ms |
+| 單問 · P95 延遲 | 17.2 ms | 8.6 ms | 13.92 ms | 7.79 ms |
+| 50 問批量吞吐 | 641 q/s | 1300 q/s | 146.8 q/s | 395.0 q/s |
+| 峰值 GPU 記憶體(單問) | 2499 MB | 1638 MB | 943.6 MiB | 687.6 MiB |
+| Snake 全速 steps/s | 48.4 | 107.6 | — | 63.6 |
+| Snake 平均推論 | 20.4 ms | 9.1 ms | — | — |
+
+> **怎麼讀這些數字**
+> - **單問 · P50/P95** — 對一個簡短問題做一次完整推論的延遲(ms);P50 為中位數(典型),
+>   P95 為最慢 5% 的上限(評估穩定性)。
+> - **50 問批量吞吐** — 50 個問題一次合批的每秒處理數(q/s);固定開銷攤平後的真正運算上限。
+> - **峰值 GPU 記憶體** — 做一個單問的峰值記憶體(權重 + forward 暫存)。
+> - **Snake steps/s** — Snake demo 全速時每秒決策數(含推論 + 規劃)。「—」= M3 Max 未報告。
+>
+> **為什麼數字不同:** 單問延遲取決於每次呼叫的固定開銷(PyTorch eager dispatch、autocast、
+> tokenization),所以 batch=1 時 GB10 與 M3 Max 接近;而批量吞吐反映原始矽晶運算力,
+> Blackwell(GB10)是 M3 Max 的兩倍(421M:147→641,322M:395→1300 q/s)。
+> GB10 峰值記憶體較高是 PyTorch 運行時保留足跡,非模型本身。
+
+互動視覺化:見 [`performance_card.html`](performance_card.html)。

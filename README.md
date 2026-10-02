@@ -157,13 +157,34 @@ It checks venv/torch/laya/weights -> confirms the :0 desktop -> opens a "Laya Sn
 
 ---
 
-## 8. Performance summary (GB10, clean room)
+## 8. Performance summary
 
-| Metric | GB10 421M | GB10 322M |
-|---|---|---|
-| Single-question P50 latency | 15.8 ms | 7.2 ms |
-| 50-question throughput | 641 q/s | 1300 q/s |
-| Snake full-speed steps/s | 48.4 | 107.6 |
-| Snake mean inference | 20.4 ms | 9.1 ms |
+FP16, end-to-end. GB10 measured in a clean room (no snake running, GPU idle); Apple M3 Max
+figures are from the official table. Peak GPU allocation: GB10 reported in MB, M3 Max in MiB
+(1 MiB ≈ 1.048 MB).
 
-Full comparison incl. Apple M3 Max: see `performance_card.html`.
+| Metric | GB10 421M | GB10 322M | M3 Max 421M | M3 Max 322M |
+|---|---|---|---|---|
+| One short question · P50 | 15.8 ms | 7.2 ms | 13.42 ms | 7.39 ms |
+| One short question · P95 | 17.2 ms | 8.6 ms | 13.92 ms | 7.79 ms |
+| 50-question throughput | 641 q/s | 1300 q/s | 146.8 q/s | 395.0 q/s |
+| Peak GPU allocation (single-q) | 2499 MB | 1638 MB | 943.6 MiB | 687.6 MiB |
+| Snake full-speed steps/s | 48.4 | 107.6 | — | 63.6 |
+| Snake mean inference | 20.4 ms | 9.1 ms | — | — |
+
+> **How to read it**
+> - **One short question · P50/P95** — latency (ms) for one full inference on a single question;
+>   P50 is the median (typical), P95 is the slowest-5% ceiling (stability).
+> - **50-question throughput** — questions per second when 50 are batched (q/s); the real
+>   compute ceiling once fixed overhead is amortized.
+> - **Peak GPU allocation** — peak memory for one question (weights + forward buffers).
+> - **Snake steps/s** — decisions per second in the Snake demo at full speed (includes
+>   inference + planning).**—** = not reported for M3 Max.
+>
+> **Why they differ:** single-question latency depends on per-call fixed overhead (PyTorch
+> eager dispatch, autocast, tokenization), which is why GB10 and M3 Max are close at batch 1.
+> Batched throughput reflects raw silicon compute, where Blackwell (GB10) doubles M3 Max
+> (421M: 147→641, 322M: 395→1300 q/s). GB10's higher peak memory is retained PyTorch runtime
+> footprint, not model size.
+
+Interactive visualization: see [`performance_card.html`](performance_card.html).
